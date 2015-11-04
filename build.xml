@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<project name="PUG" default="main" basedir=".">
+    <property environment="env" />
+
+    <taskdef resource="PCT.properties" classpath="${env.PCT_HOME}/PCT-194.jar" />
+    <DlcHome value="${env.DLC}" />
+
+    <target name="compile">
+        <PCTCompileExt numThreads="1" destDir="rcode">
+          <fileset dir="svn/pcode">
+            <include name="**/*.p"/>
+            <include name="**/*.cls"/>
+            <include name="**/*.w"/>
+          </fileset>
+          <propath>
+            <pathelement path="svn/pcode"/>
+          </propath>
+
+          <DBConnection paramFile="sports.pf" />
+        </PCTCompileExt>
+    </target>
+
+    <target name="testUnit">
+        <ProUnit project="svn/test/unitTest.xml" result="unitout/unitTestOut.xml" template="_builtin-JUnit">
+            <propath>
+                <pathelement path="rcode"/>
+                <pathelement path="svn/test/"/>
+                <pathelement path="lib/prounit_dlc11.pl"/>
+            </propath>
+            <DBConnection paramFile="sports.pf" />
+        </ProUnit>
+    </target>
+
+    <target name="main" depends="compile,testUnit">
+        <description>Main target</description>
+    </target>
+</project>

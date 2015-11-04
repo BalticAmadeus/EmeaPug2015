@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<ProUnitTestSuite>
+    <TestSet name="TestSports2000" seq="1">
+        <TestCase name="testInvoice.p" seq="2" />
+    </TestSet>
+</ProUnitTestSuite>
