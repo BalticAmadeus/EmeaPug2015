@@ -1,0 +1,80 @@
+Preparation:
+* Have downloads folder prepared:
+    /u1/download
+* In it you should have:
+    PCT-194.jar      - Progress Compilation Tools from https://github.com/jakejustus/pct
+    prounit_dlc11.pl - ProUnit or your preffered testing framework http://prounit.sourceforge.net/
+
+
+1. Make directory structure:
+    mkdir -p /u1/pug1/ /u1/pug1/db /u1/pug1/svn /u1/pug1/unitout /u1/pug1/rcode /u1/pug1/lib
+    * /u1/pug1/        - the main directory for our deployment environment
+    * /u1/pug1/db      - directory to hold the database
+    * /u1/pug1/svn     - directory to hold files, which will be checked-out from your source control systemctl
+    * /u1/pug1/unitout - directory to hold automated testing results
+    * /u1/pug1/rcode   - directory to hold compiled files
+    * /u1/pug1/lib     - directory to hold additional libraries needed for this project
+
+
+2. Copy jenkins war file (deploy to TomCat):
+    cp /u1/download/jenkins.war /usr/share/tomcat/webapps
+    systemctl start tomcat
+    * /usr/share/tomcat/webapps - directory where TomCat webapps are held
+
+    After this step, Jenkins should be available to access via web browser:
+    http://172.19.1.102:8081/jenkins/
+
+
+3. Copy dependencies from download folder to our additional library folder:
+    cp /u1/download/PCT-194.jar /u1/pug1/lib
+    cp /u1/download/prounit_dlc11.pl /u1/pug1/lib
+
+
+4. Copy database to project directory:
+    procopy $DLC/sports2000 /u1/pug1/db/sports2000  - As an example copy the sports2000 databse
+    cd /u1/pug1/db
+    sudo -u tomcat proserve sports2000              - Start the databse under the TomCat user (otherwise there may be problems with permissions)
+
+
+5. Create DB connection parameters file:
+    echo "-db /u1/pug1/db/sports2000" > /u1/pug1/sports.pf
+    This is just a file containing DB connection string. It will be used in the next step (build.xml)
+
+
+6. Copy/create build.xml file (an example is contained together with these instructions)
+    cp /u1/download/build.xml /u1/pug1/
+
+
+7. Set directory owner:
+    sudo chgrp -R tomcat /u1/pug1/
+    Tomcat needs to have enough permissions to run Jenkins.
+
+
+8. Change Jenkins configuration:
+    Go to http://172.19.1.102:8081/jenkins (or the adress where your server resides)
+    In the configuration, add these environmental variables (found in Global properties -> Environment variables):
+
+    Name:   DLC
+    Value:  /u1/pro/11.5
+    (where your Progress DLC resides)
+
+    Name:   PCT_HOME
+    Value:  /u1/pug1/lib
+    (where your additional sources reside)
+
+    These settings will be used in build.xml
+
+
+9. Create a new job in Jenkins:
+    Custom workspace:   /u1/pug1                           - The workspace created in step 1;
+    Subversion:         file:///svn/pug/demo_project@HEAD  - Your source control branch;
+    Checkout dir:       svn                                - Important! This is where checked out files will be. If this is left empty, Jenkins will delete everything in /u1/pug1/*;
+    Build/invoke ant:   main                               - Which ANT target to run. In this case it's "main" from build.xml;
+    Post build/jUnit:   unitout/*.xml                      - Where to put automated testing outputs.
+
+
+10. Go to Jenkins dashboard and start the job you just created. It should have:
+* checked out sources from repository
+* compiled them to /u1/pug1/rcode/
+* output test results to /u1/pug1/unitout/ (they may also be viewed through Jenkins dashboard)
+If everything was done correctly, good job! You have a wroking Jenkins setup.
